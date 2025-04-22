@@ -35,6 +35,10 @@
 			(args "_consData[$index]")
 		)
 	)
+	(style
+		(width = 0)
+		(align = "middle|center")
+	)
 )
 
 (def constant CM2_APPEAR_SETTINGS {
@@ -92,9 +96,10 @@
 		(var altVision:bool = "cameraEntity.camera.altVision" (event "cameraEntity.camera.evAltVisionChanged"))
 		(var altVisionEnabled:bool = "altVision && !isTactical")
 
+		(var floatDigits:number = "consStateTime < 10 ? 1 : 0")
 		(var consStateStr:str = "	isReady ? 'RDY' :
 									isEmpty ? 'NONE':
-									countdownFormat(consStateTime)")
+									countdownFormat(consStateTime, floatDigits)")
 		(var consNumStr:str = "		consNum != 'inf'?
 									'x' + consNum	:
 									' '")
@@ -139,6 +144,8 @@
 			(bind animatedIconAlpha		"CM2_DEFAULT_SETTINGS.ALPHA" init=false on=evAnimEnded)
 			(bind animatedIconMargin	"CM2_DEFAULT_SETTINGS.HEIGHT" init=false on=evAnimEnded)
 		)
+
+		(var iconColorTransform:dict = "isEmpty ? { redMultiplier:0.5,greenMultiplier:0.5,blueMultiplier:0.5,alphaMultiplier:1} : {}")
 	)
 
 	(dispatch evPlayActivatedAnimation (bind trigger "isActive") (bind enabled "!isActive"))
@@ -146,25 +153,22 @@
 	(dispatch evPlayEndingAnimation (bind trigger "isConsumableEnding") (bind enabled "isConsumableEnding"))
 
 	(hblock
-		(style
-			(bind height "isActive ? 24px : 'auto'")
-		)
 		(block
 			(bind visible "isActive || altVisionEnabled")
 			(style
 				(bind backgroundImage "consIconPath")
-				(scaleX = 0.4)
-				(scaleY = 0.4)
-				(width = 60px)
-				(height = 60px)
-				(bind marginTop "animatedIconMargin")
+				(backgroundSize = "fill")
+				(width = 24px)
+				(height = 24px)
+				(bind visualOffsetY "animatedIconMargin")
 				(bind alpha "animatedIconAlpha")
 			)
+			(bind colorTransform "iconColorTransform")
 		)
 		(block
 			(bind visible "altVisionEnabled")
 			(style
-				(width = 24px)#need to be even number?
+				(width = 18px)
 			)
 			(element ConsumableMarkerTextItem "consStateStr" "consStateColor")
 			(element ConsumableMarkerTextItem "consNumStr" "consStateColor")
