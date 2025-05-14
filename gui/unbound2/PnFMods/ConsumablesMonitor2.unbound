@@ -59,11 +59,13 @@
 	ALPHA_MAX:	1.0
 })
 (def constant CM2_STATE_COLORS {
-	SC.Battle.CONSUMABLE_STATES.READY:		"SC.Ui_styles.SERVICE_COLORS.WHITE",	#READY
-	SC.Battle.CONSUMABLE_STATES.AT_WORK:	"SC.Ui_styles.SERVICE_COLORS.GREEN",	#AT_WORK
-	SC.Battle.CONSUMABLE_STATES.RELOAD:		"SC.Ui_styles.SERVICE_COLORS.ORANGE",	#RELOAD
-	SC.Battle.CONSUMABLE_STATES.NO_AMMO:	"SC.Ui_styles.SERVICE_COLORS.RED",		#NO_AMMO
-	SC.Battle.CONSUMABLE_STATES.PREPARATION:"SC.Ui_styles.SERVICE_COLORS.ORANGE"	#PREPARATION
+	SC.Battle.CONSUMABLE_STATES.READY			: "SC.Ui_styles.SERVICE_COLORS.WHITE",
+	SC.Battle.CONSUMABLE_STATES.SELECTED		: "SC.Ui_styles.SERVICE_COLORS.WHITE",
+	SC.Battle.CONSUMABLE_STATES.AT_WORK			: "SC.Ui_styles.SERVICE_COLORS.GREEN",
+	SC.Battle.CONSUMABLE_STATES.RELOAD			: "SC.Ui_styles.SERVICE_COLORS.ORANGE",
+	SC.Battle.CONSUMABLE_STATES.NO_AMMO			: "SC.Ui_styles.SERVICE_COLORS.RED",
+	SC.Battle.CONSUMABLE_STATES.PREPARATION		: "SC.Ui_styles.SERVICE_COLORS.ORANGE",
+	SC.Battle.CONSUMABLE_STATES.REGENERATION	: "SC.Ui_styles.SERVICE_COLORS.ORANGE",
 })
 
 (def constant TT_CONSUMABLESMONITOR_INSTALLED true)
@@ -74,35 +76,36 @@
 		(event evPlayAboutToEndAnimation)
 		(event evPlayEndingAnimation)
 
-		(var consIconPath:str = "'url:../consumables/consumable_' + _consData['icon'] + '.png'")
-		(var consNum:str = "_consData['num']")
-		(var consState:number = "_consData['currentState']")
-		(var consEndTime:number = "_consData['endTime']")
+		(var consIconPath:str = "'url:../consumables/consumable_' + _consData.icon + '.png'")
+		(var consNum:str = "_consData.num")
+		(var consState:number = "_consData.currentState")
+		(var stateStr:str = "toString(consState)")
+		(var consEndTime:number = "_consData.endTime")
+		(var isConsAvailable:bool = "_consData.isEnabled")
 		
 		(var isReady:bool = "consState == SC.Battle.CONSUMABLE_STATES.READY")
 		(var isActive:bool = "consState == SC.Battle.CONSUMABLE_STATES.AT_WORK")
 		(var isReload:bool = "consState == SC.Battle.CONSUMABLE_STATES.RELOAD")
 		(var isEmpty:bool = "consState == SC.Battle.CONSUMABLE_STATES.NO_AMMO")
 		(var isPreparation:bool = "consState == SC.Battle.CONSUMABLE_STATES.PREPARATION")
+		(var isRegenerating:bool = "consState == SC.Battle.CONSUMABLE_STATES.REGENERATION")
 		
-		#0: READY, 1: AT_WORK, 2: RELOAD, 3: NO_AMMO, 4:PREPARATION
-		(var consStateColor:number = "CM2_STATE_COLORS[consState]")
+		(var consStateColor:number = "stateStr in CM2_STATE_COLORS ? CM2_STATE_COLORS[stateStr] : SC.Ui_styles.SERVICE_COLORS.WHITE")
 
-		(var timerEntity:gfx = "$datahub.getSingleEntity(CC.timer)")
-		(var consStateTime:number = "consEndTime - timerEntity.timer.currentTime" (event "timerEntity.timer.evFrequent"))
+		(var timer:gfx = "$datahub.getSingleComponent(CC.timer)")
+		(var consStateTime:number = "consEndTime - timer.currentTime" (event "timer.evFrequent"))
 
-		(var cameraEntity:gfx = "$datahub.getSingleEntity(CC.camera)")
-		(var isTactical:bool = "cameraEntity.camera.isTactical" (event "cameraEntity.camera.evTacticalStateChanged"))
-		(var altVision:bool = "cameraEntity.camera.altVision" (event "cameraEntity.camera.evAltVisionChanged"))
+		(var camera:gfx = "$datahub.getSingleComponent(CC.camera)")
+		(var isTactical:bool = "camera.isTactical" (event "camera.evTacticalStateChanged"))
+		(var altVision:bool = "camera.altVision" (event "camera.evAltVisionChanged"))
 		(var altVisionEnabled:bool = "altVision && !isTactical")
 
 		(var floatDigits:number = "consStateTime < 10 ? 1 : 0")
 		(var consStateStr:str = "	isReady ? 'RDY' :
-									isEmpty ? 'NONE':
-									countdownFormat(consStateTime, floatDigits)")
-		(var consNumStr:str = "		consNum != 'inf'?
-									'x' + consNum	:
-									' '")
+									isEmpty ? '--'
+											: countdownFormat(consStateTime, floatDigits)")
+		(var consNumStr:str = "	consNum != 'inf' ? 'x' + consNum
+												 : ' '")
 
 		(var isConsumableAboutToEnd:bool = "isActive && (consStateTime <= CM2_ENDING_SETTINGS.DURATION)")
 		(var isConsumableEnding:bool = "isActive && (consStateTime <= CM2_APPEAR_SETTINGS.DURATION)")
@@ -145,7 +148,10 @@
 			(bind animatedIconMargin	"CM2_DEFAULT_SETTINGS.HEIGHT" init=false on=evAnimEnded)
 		)
 
-		(var iconColorTransform:dict = "isEmpty ? { redMultiplier:0.5,greenMultiplier:0.5,blueMultiplier:0.5,alphaMultiplier:1} : {}")
+		(var colorValue:number = "isConsAvailable ? 0.8 :
+										  isEmpty ? 0.5
+										  		  : 1.0")
+		(var iconColorTransform:dict = "{ redMultiplier: colorValue, greenMultiplier: colorValue, blueMultiplier: colorValue, alphaMultiplier: animatedIconAlpha}")
 	)
 
 	(dispatch evPlayActivatedAnimation (bind trigger "isActive") (bind enabled "!isActive"))
@@ -161,7 +167,6 @@
 				(width = 24px)
 				(height = 24px)
 				(bind visualOffsetY "animatedIconMargin")
-				(bind alpha "animatedIconAlpha")
 			)
 			(bind colorTransform "iconColorTransform")
 		)
@@ -177,7 +182,10 @@
 )
 
 (def element ConsumableMarkerTextItem (_value:str, _color:number) layout=true
-	(class $WorldMarkerItemMargins)
+	(style
+		(height = 12px)
+		(align = "middle|center")
+	)
 	(tf
 		(class $WorldMarkerTextItem)
 		(style
