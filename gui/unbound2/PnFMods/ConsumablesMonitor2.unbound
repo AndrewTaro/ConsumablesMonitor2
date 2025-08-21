@@ -2,18 +2,11 @@
 	(scope
 		(macro GET_MARKER_ENTITY_COMPONENT 'avatar')
 		(var shipName:str = "avatarComponent ? avatarComponent.ship.ref.ship.nameUpper : ''")
-
-		(macro IS_SPECTATOR_MODE)
 	)
 	(style
 		(align = "middle|center")
 	)
-	(controller $Instance renderer='CM2_ConsumablesMonitorItem'
-		(bind enabled "!isSpectatorTrainingMode")
-		(args
-			_markerEntity="_markerEntity"
-		)
-	)
+	(element CM2_ConsumablesMonitorItem _markerEntity="_markerEntity")
 	(element SimpleMarkerTextItem "shipName")
 )
 
@@ -22,18 +15,12 @@
 		(macro GET_MARKER_ENTITY_COMPONENT 'building')
 		(var buildingName:str = "buildingComponent 	? buildingComponent.name	? tr(buildingComponent.name)
 																				: buildingComponent.typeIDS
-													: ''")	
-		(macro IS_SPECTATOR_MODE)	
+													: ''")
 	)
 	(style
 		(align = "middle|center")
 	)
-	(controller $Instance renderer='CM2_ConsumablesMonitorItem'
-		(bind enabled "!isSpectatorTrainingMode")
-		(args
-			_markerEntity="_markerEntity"
-		)
-	)
+	(element CM2_ConsumablesMonitorItem _markerEntity="_markerEntity")
 	(element SimpleMarkerTextItem "toUpper(buildingName)")
 )
 
